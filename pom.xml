@@ -125,7 +125,7 @@
                                     <goal>CreateApplication</goal>
                                 </goals>
                                 <configuration>
-                                    <ApplicationName>${application.name}</ApplicationName>
+                                    <applicationName>${application.name}</applicationName>
                                 </configuration>
                             </execution>
 
@@ -136,10 +136,10 @@
                                     <goal>CreateApplicationVersion</goal>
                                 </goals>
                                 <configuration>
-                                    <ApplicationName>${application.name}</ApplicationName>
-                                    <VersionLabel>${version.label}</VersionLabel>
-                                    <S3Bucket>${s3.bucket}</S3Bucket>
-                                    <S3Key>${s3.key}</S3Key>
+                                    <applicationName>${application.name}</applicationName>
+                                    <versionLabel>${version.label}</versionLabel>
+                                    <s3Bucket>${s3.bucket}</s3Bucket>
+                                    <s3Key>${s3.key}</s3Key>
                                 </configuration>
                             </execution>
 
@@ -150,13 +150,13 @@
                                     <goal>CreateEnvironment</goal>
                                 </goals>
                                 <configuration>
-                                    <ApplicationName>${application.name}</ApplicationName>
-                                    <VersionLabel>${version.label}</VersionLabel>
-                                    <EnvironmentName>${environment.name}</EnvironmentName>
-                                    <CNAMEPrefix>${cname.prefix}</CNAMEPrefix>
-                                    <GroupName>${group.name}</GroupName>
-                                    <SolutionStackName>${solution.stack.name}</SolutionStackName>
-                                    <OptionSettings>${option.settings}</OptionSettings>
+                                    <applicationName>${application.name}</applicationName>
+                                    <versionLabel>${version.label}</versionLabel>
+                                    <environmentName>${environment.name}</environmentName>
+                                    <cnamePrefix>${cname.prefix}</cnamePrefix>
+                                    <groupName>${group.name}</groupName>
+                                    <solutionStackName>${solution.stack.name}</solutionStackName>
+                                    <optionSettings>${option.settings}</optionSettings>
                                 </configuration>
                             </execution>
                         </executions>
