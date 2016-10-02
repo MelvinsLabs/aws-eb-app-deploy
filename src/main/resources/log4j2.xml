@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration monitorInterval="10">
+
+    <Properties>
+        <Property name="logFilePrefix">app</Property>
+        <Property name="logPattern">%d{DEFAULT} [%level] %c - %m%n</Property>
+    </Properties>
+
+    <Appenders>
+        <RollingRandomAccessFile name="LogFile" fileName="${logFilePrefix}.log"
+                                 filePattern="logs/${logFilePrefix}.log.%i">
+            <PatternLayout>
+                <Pattern>${logPattern}</Pattern>
+            </PatternLayout>
+
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingRandomAccessFile>
+
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${logPattern}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <AsyncLogger name="me.melvins.labs" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="LogFile"/>
+        </AsyncLogger>
+        <AsyncLogger name="org.apache" level="WARN" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="LogFile"/>
+        </AsyncLogger>
+
+        <AsyncRoot level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="LogFile"/>
+        </AsyncRoot>
+    </Loggers>
+
+</Configuration>

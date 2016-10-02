@@ -1,0 +1,168 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>me.melvins.labs</groupId>
+    <artifactId>aws-eb-app-deploy</artifactId>
+    <version>0.0.0.0</version>
+    <packaging>maven-plugin</packaging>
+
+    <name>aws-eb-app-deploy</name>
+
+    <properties>
+        <!-- Project Specific Settings -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Programming Language Version -->
+        <java.version>1.8</java.version>
+
+        <!-- 3rd Party Dependency Versions -->
+        <com.amazonaws.version>1.11.39</com.amazonaws.version>
+        <com.lmax.disruptor.version>3.3.4</com.lmax.disruptor.version>
+        <maven-plugin-annotations.version>3.4</maven-plugin-annotations.version>
+        <maven-plugin-api.version>3.3.9</maven-plugin-api.version>
+        <org.apache.logging.log4j.version>2.5</org.apache.logging.log4j.version>
+
+        <!-- Profile Variables -->
+        <file.to.upload></file.to.upload>
+        <s3.bucket>melvins</s3.bucket>
+        <s3.key></s3.key>
+        <application.name></application.name>
+        <version.label></version.label>
+        <environment.name></environment.name>
+        <cname.prefix></cname.prefix>
+        <group.name>MyApp</group.name>
+        <solution.stack.name>64bit Amazon Linux 2016.03 v2.1.6 running Docker 1.11.2</solution.stack.name>
+        <option.settings></option.settings>
+    </properties>
+
+    <dependencies>
+        <!-- Maven Plugin API -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${maven-plugin-api.version}</version>
+        </dependency>
+
+        <!-- Maven Plugin Annotations -->
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>${maven-plugin-annotations.version}</version>
+        </dependency>
+
+        <!-- Apache Log4J Logging Framework -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${org.apache.logging.log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${org.apache.logging.log4j.version}</version>
+        </dependency>
+        <!-- LMAX Disruptor For Async Logging -->
+        <dependency>
+            <groupId>com.lmax</groupId>
+            <artifactId>disruptor</artifactId>
+            <version>${com.lmax.disruptor.version}</version>
+        </dependency>
+
+        <!-- AWS Java SDK -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-elasticbeanstalk</artifactId>
+            <version>${com.amazonaws.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>${com.amazonaws.version}</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>UploadAppVersion</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>me.melvins.labs</groupId>
+                        <artifactId>aws-eb-app-deploy</artifactId>
+                        <version>0.0.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>1</id>
+                                <goals>
+                                    <goal>UploadAppVersionBundle</goal>
+                                </goals>
+                                <configuration>
+                                    <s3Bucket>${s3.bucket}</s3Bucket>
+                                    <s3Key>${s3.key}</s3Key>
+                                    <file>${file.to.upload}</file>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>CreateApp</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>me.melvins.labs</groupId>
+                        <artifactId>aws-eb-app-deploy</artifactId>
+                        <version>0.0.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>1</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>CreateApplication</goal>
+                                </goals>
+                                <configuration>
+                                    <ApplicationName>${application.name}</ApplicationName>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>2</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>CreateApplicationVersion</goal>
+                                </goals>
+                                <configuration>
+                                    <ApplicationName>${application.name}</ApplicationName>
+                                    <VersionLabel>${version.label}</VersionLabel>
+                                    <S3Bucket>${s3.bucket}</S3Bucket>
+                                    <S3Key>${s3.key}</S3Key>
+                                </configuration>
+                            </execution>
+
+                            <execution>
+                                <id>3</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>CreateEnvironment</goal>
+                                </goals>
+                                <configuration>
+                                    <ApplicationName>${application.name}</ApplicationName>
+                                    <VersionLabel>${version.label}</VersionLabel>
+                                    <EnvironmentName>${environment.name}</EnvironmentName>
+                                    <CNAMEPrefix>${cname.prefix}</CNAMEPrefix>
+                                    <GroupName>${group.name}</GroupName>
+                                    <SolutionStackName>${solution.stack.name}</SolutionStackName>
+                                    <OptionSettings>${option.settings}</OptionSettings>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
