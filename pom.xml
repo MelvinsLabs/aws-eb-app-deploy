@@ -94,6 +94,7 @@
                         <executions>
                             <execution>
                                 <id>1</id>
+                                <phase>deploy</phase>
                                 <goals>
                                     <goal>UploadAppVersionBundle</goal>
                                 </goals>
@@ -120,7 +121,7 @@
                         <executions>
                             <execution>
                                 <id>1</id>
-                                <phase>compile</phase>
+                                <phase>deploy</phase>
                                 <goals>
                                     <goal>CreateApplication</goal>
                                 </goals>
@@ -131,7 +132,7 @@
 
                             <execution>
                                 <id>2</id>
-                                <phase>compile</phase>
+                                <phase>deploy</phase>
                                 <goals>
                                     <goal>CreateApplicationVersion</goal>
                                 </goals>
@@ -145,7 +146,7 @@
 
                             <execution>
                                 <id>3</id>
-                                <phase>compile</phase>
+                                <phase>deploy</phase>
                                 <goals>
                                     <goal>CreateEnvironment</goal>
                                 </goals>
