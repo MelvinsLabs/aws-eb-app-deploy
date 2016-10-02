@@ -87,7 +87,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
         List<ConfigurationOptionSetting> configurationOptionSettingList = new ArrayList<ConfigurationOptionSetting>();
 
         LOGGER.info(optionSettings);
-        if (optionSettings != null && optionSettings.trim().length() == 0) {
+        if (optionSettings != null && optionSettings.trim().length() != 0) {
             LOGGER.info(optionSettings);
             String[] allOptionSettings = optionSettings.split(" ");
             for (String eachOptionSetting : allOptionSettings) {
