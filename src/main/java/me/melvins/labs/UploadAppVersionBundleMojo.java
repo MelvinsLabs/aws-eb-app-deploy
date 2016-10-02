@@ -17,6 +17,8 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import java.io.File;
+
 
 /**
  * Created by Melvin_Mathai on 10/1/2016.
@@ -36,6 +38,15 @@ public class UploadAppVersionBundleMojo extends AbstractMojo {
     @Parameter(required = true)
     private String file;
 
+    @Override
+    public String toString() {
+        return "UploadAppVersionBundleMojo{" +
+                "s3Bucket='" + s3Bucket + '\'' +
+                ", s3Key='" + s3Key + '\'' +
+                ", file='" + file + '\'' +
+                '}';
+    }
+
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         LOGGER.info("Executing {0}", toString());
@@ -43,6 +54,8 @@ public class UploadAppVersionBundleMojo extends AbstractMojo {
         AmazonS3Client amazonS3Client =
                 new AmazonS3Client(new ProfileCredentialsProvider())
                         .withRegion(Regions.US_WEST_2);
+
+        File file = new File(this.file);
 
         PutObjectRequest putObjectRequest = new PutObjectRequest(s3Bucket, s3Key, file);
 
