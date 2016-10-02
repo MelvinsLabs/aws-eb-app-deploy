@@ -61,7 +61,12 @@ public class CreateApplicationVersionMojo extends AbstractMojo {
         createApplicationVersionRequest.setVersionLabel(versionLabel);
         createApplicationVersionRequest.setSourceBundle(new S3Location().withS3Bucket(s3Bucket).withS3Key(s3Key));
 
-        awsElasticBeanstalkClient.createApplicationVersion(createApplicationVersionRequest);
+        try {
+            awsElasticBeanstalkClient.createApplicationVersion(createApplicationVersionRequest);
+
+        } catch (Exception ex) {
+            LOGGER.error("Application Version Already Exist");
+        }
     }
 
 }
