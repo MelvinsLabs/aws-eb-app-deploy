@@ -86,16 +86,18 @@ public class CreateEnvironmentMojo extends AbstractMojo {
 
         List<ConfigurationOptionSetting> configurationOptionSettingList = new ArrayList<ConfigurationOptionSetting>();
 
-        String[] allOptionSettings = optionSettings.split(" ");
-        for (String eachOptionSetting : allOptionSettings) {
-            String[] optionSettingComponents = eachOptionSetting.split("=");
+        if (optionSettings != null && optionSettings.trim().length() == 0) {
+            String[] allOptionSettings = optionSettings.split(" ");
+            for (String eachOptionSetting : allOptionSettings) {
+                String[] optionSettingComponents = eachOptionSetting.split("=");
 
-            ConfigurationOptionSetting configurationOptionSetting = new ConfigurationOptionSetting();
-            configurationOptionSetting.setNamespace(optionSettingComponents[0]);
-            configurationOptionSetting.setOptionName(optionSettingComponents[1]);
-            configurationOptionSetting.setValue(optionSettingComponents[2]);
+                ConfigurationOptionSetting configurationOptionSetting = new ConfigurationOptionSetting();
+                configurationOptionSetting.setNamespace(optionSettingComponents[0]);
+                configurationOptionSetting.setOptionName(optionSettingComponents[1]);
+                configurationOptionSetting.setValue(optionSettingComponents[2]);
 
-            configurationOptionSettingList.add(configurationOptionSetting);
+                configurationOptionSettingList.add(configurationOptionSetting);
+            }
         }
 
         return configurationOptionSettingList;
