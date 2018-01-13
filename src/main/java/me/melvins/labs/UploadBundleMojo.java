@@ -1,11 +1,8 @@
 package me.melvins.labs;
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
-import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationRequest;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.EncryptedPutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,13 +18,13 @@ import java.io.File;
 
 
 /**
- * Created by Melvin_Mathai on 10/1/2016.
+ * @author Melvins
  */
-@Mojo(name = "UploadAppVersionBundle", defaultPhase = LifecyclePhase.DEPLOY)
-public class UploadAppVersionBundleMojo extends AbstractMojo {
+@Mojo(name = "UploadBundle", defaultPhase = LifecyclePhase.DEPLOY)
+public class UploadBundleMojo extends AbstractMojo {
 
     private static final Logger LOGGER =
-            LogManager.getLogger(UploadAppVersionBundleMojo.class, new MessageFormatMessageFactory());
+            LogManager.getLogger(UploadBundleMojo.class, new MessageFormatMessageFactory());
 
     @Parameter(required = true)
     private String s3Bucket;
@@ -40,7 +37,7 @@ public class UploadAppVersionBundleMojo extends AbstractMojo {
 
     @Override
     public String toString() {
-        return "UploadAppVersionBundleMojo{" +
+        return "UploadBundleMojo{" +
                 "s3Bucket='" + s3Bucket + '\'' +
                 ", s3Key='" + s3Key + '\'' +
                 ", file='" + file + '\'' +
@@ -52,7 +49,7 @@ public class UploadAppVersionBundleMojo extends AbstractMojo {
         LOGGER.info("Executing {0}", toString());
 
         AmazonS3Client amazonS3Client =
-                new AmazonS3Client(new ProfileCredentialsProvider())
+                new AmazonS3Client(new InstanceProfileCredentialsProvider())
                         .withRegion(Regions.US_WEST_2);
 
         File file = new File(this.file);

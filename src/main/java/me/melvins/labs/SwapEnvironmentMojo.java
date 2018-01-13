@@ -1,3 +1,7 @@
+/*
+ *
+ */
+
 package me.melvins.labs;
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -17,7 +21,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 
 /**
- * Created by Melvin_Mathai on 10/1/2016.
+ * @author Melvins
  */
 @Mojo(name = "SwapEnvironment", defaultPhase = LifecyclePhase.DEPLOY)
 public class SwapEnvironmentMojo extends AbstractMojo {
@@ -54,4 +58,11 @@ public class SwapEnvironmentMojo extends AbstractMojo {
         awsElasticBeanstalkClient.swapEnvironmentCNAMEs(swapEnvironmentCNAMEsRequest);
     }
 
+    public void setSourceEnvironmentId(String sourceEnvironmentId) {
+        this.sourceEnvironmentId = sourceEnvironmentId;
+    }
+
+    public void setDestinationEnvironmentId(String destinationEnvironmentId) {
+        this.destinationEnvironmentId = destinationEnvironmentId;
+    }
 }

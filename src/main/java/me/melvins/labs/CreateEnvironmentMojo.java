@@ -1,10 +1,22 @@
+/*
+ *
+ */
+
 package me.melvins.labs;
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
+import com.amazonaws.services.elasticbeanstalk.model.CheckDNSAvailabilityRequest;
+import com.amazonaws.services.elasticbeanstalk.model.CheckDNSAvailabilityResult;
 import com.amazonaws.services.elasticbeanstalk.model.ConfigurationOptionSetting;
 import com.amazonaws.services.elasticbeanstalk.model.CreateEnvironmentRequest;
+import com.amazonaws.services.elasticbeanstalk.model.CreateEnvironmentResult;
+import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthRequest;
+import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthResult;
+import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest;
+import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsResult;
+import me.melvins.labs.utils.TimeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.MessageFormatMessageFactory;
@@ -16,17 +28,22 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
 /**
- * Created by Melvin_Mathai on 10/1/2016.
+ * @author Melvins
  */
 @Mojo(name = "CreateEnvironment", defaultPhase = LifecyclePhase.DEPLOY)
 public class CreateEnvironmentMojo extends AbstractMojo {
 
     private static final Logger LOGGER =
             LogManager.getLogger(CreateEnvironmentMojo.class, new MessageFormatMessageFactory());
+
+    public static final List<String> HEALTH_STATUS_GREEN = Arrays.asList("OK", "Info");
+
+    private static final int MAX_WAIT_COUNT = 6;
 
     @Parameter(required = true)
     private String applicationName;
@@ -70,16 +87,82 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
                         .withRegion(Regions.US_WEST_2);
 
+        // Check cName Availability.
+        CheckDNSAvailabilityRequest checkDNSAvailabilityRequest = new CheckDNSAvailabilityRequest();
+        checkDNSAvailabilityRequest.setCNAMEPrefix(cnamePrefix);
+
+        CheckDNSAvailabilityResult checkDNSAvailabilityResult =
+                awsElasticBeanstalkClient.checkDNSAvailability(checkDNSAvailabilityRequest);
+
+        String cName;
+        if (checkDNSAvailabilityResult.getAvailable().booleanValue()) {
+            // If cName Available, proceed as there is no existing environment.
+            cName = cnamePrefix;
+
+        } else {
+            // If cName not Available, suffix cName, as there is an existing environment.
+            // Assuming environment belongs to the same App.
+            cName = cnamePrefix + "-0";
+        }
+
+        DescribeEnvironmentsRequest describeEnvironmentsRequest = new DescribeEnvironmentsRequest();
+        describeEnvironmentsRequest.setApplicationName(applicationName);
+        describeEnvironmentsRequest.setEnvironmentNames(Arrays.asList(environmentName + "-B"));
+
+        DescribeEnvironmentsResult describeEnvironmentsResult =
+                awsElasticBeanstalkClient.describeEnvironments(describeEnvironmentsRequest);
+
+        String blueGreenSuffix = "-B";
+        if (describeEnvironmentsResult.getEnvironments().size() > 0) {
+            blueGreenSuffix = "-G";
+        }
+        // else Blue Environment Do Not Exist.
+
         CreateEnvironmentRequest createEnvironmentRequest = new CreateEnvironmentRequest();
         createEnvironmentRequest.setApplicationName(applicationName);
         createEnvironmentRequest.setVersionLabel(versionLabel);
-        createEnvironmentRequest.setEnvironmentName(environmentName);
-        createEnvironmentRequest.setCNAMEPrefix(cnamePrefix);
+        createEnvironmentRequest.setEnvironmentName(environmentName + blueGreenSuffix);
+        createEnvironmentRequest.setCNAMEPrefix(cName);
         createEnvironmentRequest.setGroupName(groupName);
         createEnvironmentRequest.setSolutionStackName(solutionStackName);
         createEnvironmentRequest.setOptionSettings(createOptionSettings());
 
-        awsElasticBeanstalkClient.createEnvironment(createEnvironmentRequest);
+        CreateEnvironmentResult createEnvironmentResult =
+                awsElasticBeanstalkClient.createEnvironment(createEnvironmentRequest);
+
+        verifyEnvironmentHealth(awsElasticBeanstalkClient, createEnvironmentResult);
+    }
+
+    private void verifyEnvironmentHealth(AWSElasticBeanstalkClient awsElasticBeanstalkClient,
+                                         CreateEnvironmentResult createEnvironmentResult) {
+
+        String newEnvironmentId = createEnvironmentResult.getEnvironmentId();
+        String healthStatus = createEnvironmentResult.getHealthStatus();
+
+        int waitCount = 0;
+        while (waitCount < MAX_WAIT_COUNT) {
+
+            if (HEALTH_STATUS_GREEN.contains(healthStatus)) {
+                LOGGER.info("Health Status Of Env [{0}] Is {1}", newEnvironmentId, healthStatus);
+
+            } else {
+                waitCount++;
+
+                LOGGER.info("Env [{0}] Health Status [{1}] Waiting {2}/{3}",
+                        newEnvironmentId, healthStatus, waitCount, MAX_WAIT_COUNT);
+
+                TimeUtils.sleeper(1000 * 60 * 5);
+
+                DescribeEnvironmentHealthRequest describeEnvironmentHealthRequest = new
+                        DescribeEnvironmentHealthRequest();
+                describeEnvironmentHealthRequest.setEnvironmentId(newEnvironmentId);
+
+                DescribeEnvironmentHealthResult describeEnvironmentHealthResult =
+                        awsElasticBeanstalkClient.describeEnvironmentHealth(describeEnvironmentHealthRequest);
+
+                healthStatus = describeEnvironmentHealthResult.getHealthStatus();
+            }
+        }
     }
 
     private List<ConfigurationOptionSetting> createOptionSettings() {
@@ -106,4 +189,31 @@ public class CreateEnvironmentMojo extends AbstractMojo {
         return configurationOptionSettingList;
     }
 
+    public void setApplicationName(String applicationName) {
+        this.applicationName = applicationName;
+    }
+
+    public void setVersionLabel(String versionLabel) {
+        this.versionLabel = versionLabel;
+    }
+
+    public void setEnvironmentName(String environmentName) {
+        this.environmentName = environmentName;
+    }
+
+    public void setCnamePrefix(String cnamePrefix) {
+        this.cnamePrefix = cnamePrefix;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    public void setSolutionStackName(String solutionStackName) {
+        this.solutionStackName = solutionStackName;
+    }
+
+    public void setOptionSettings(String optionSettings) {
+        this.optionSettings = optionSettings;
+    }
 }

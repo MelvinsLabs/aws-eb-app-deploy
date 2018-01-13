@@ -7,7 +7,7 @@ package me.melvins.labs;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
-import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationRequest;
+import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.MessageFormatMessageFactory;
@@ -22,19 +22,19 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * @author Melvins
  */
-@Mojo(name = "CreateApplication", defaultPhase = LifecyclePhase.DEPLOY)
-public class CreateApplicationMojo extends AbstractMojo {
+@Mojo(name = "TerminateEnvironment", defaultPhase = LifecyclePhase.DEPLOY)
+public class TerminateEnvironmentMojo extends AbstractMojo {
 
     private static final Logger LOGGER =
-            LogManager.getLogger(CreateApplicationMojo.class, new MessageFormatMessageFactory());
+            LogManager.getLogger(TerminateEnvironmentMojo.class, new MessageFormatMessageFactory());
 
     @Parameter(required = true)
-    private String applicationName;
+    private String environmentId;
 
     @Override
     public String toString() {
-        return "CreateApplicationMojo{" +
-                "applicationName='" + applicationName + '\'' +
+        return "TerminateEnvironmentMojo{" +
+                "environmentId='" + environmentId + '\'' +
                 '}';
     }
 
@@ -46,15 +46,14 @@ public class CreateApplicationMojo extends AbstractMojo {
                 new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
                         .withRegion(Regions.US_WEST_2);
 
-        CreateApplicationRequest createApplicationRequest = new CreateApplicationRequest();
-        createApplicationRequest.setApplicationName(applicationName);
+        TerminateEnvironmentRequest terminateEnvironmentRequest = new TerminateEnvironmentRequest();
+        terminateEnvironmentRequest.setEnvironmentId(environmentId);
 
-        try {
-            awsElasticBeanstalkClient.createApplication(createApplicationRequest);
+        awsElasticBeanstalkClient.terminateEnvironment(terminateEnvironmentRequest);
+    }
 
-        } catch (Exception ex) {
-            LOGGER.warn("Application Already Exist");
-        }
+    public void setEnvironmentId(String environmentId) {
+        this.environmentId = environmentId;
     }
 
 }

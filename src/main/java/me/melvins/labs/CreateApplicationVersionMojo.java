@@ -1,3 +1,7 @@
+/*
+ *
+ */
+
 package me.melvins.labs;
 
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
@@ -18,7 +22,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 
 /**
- * Created by Melvin_Mathai on 10/1/2016.
+ * @author Melvins
  */
 @Mojo(name = "CreateApplicationVersion", defaultPhase = LifecyclePhase.DEPLOY)
 public class CreateApplicationVersionMojo extends AbstractMojo {
