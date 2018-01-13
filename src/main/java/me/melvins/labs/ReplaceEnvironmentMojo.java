@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static me.melvins.labs.CreateEnvironmentMojo.HEALTH_STATUS_GREEN;
+import static me.melvins.labs.CreateEnvironmentMojo.findCName;
+import static me.melvins.labs.CreateEnvironmentMojo.findEnvName;
 
 
 /**
@@ -63,6 +65,10 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
     @Parameter(required = false)
     private String optionSettings;
 
+    private String cName;
+
+    private String envName;
+
     @Override
     public String toString() {
         return "ReplaceEnvironmentMojo{" +
@@ -84,25 +90,11 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
                 new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
                         .withRegion(Regions.US_WEST_2);
 
-        // Check cName Availability.
-        CheckDNSAvailabilityRequest checkDNSAvailabilityRequest = new CheckDNSAvailabilityRequest();
-        checkDNSAvailabilityRequest.setCNAMEPrefix(cnamePrefix);
+        cName = findCName(awsElasticBeanstalkClient,cnamePrefix);
 
-        CheckDNSAvailabilityResult checkDNSAvailabilityResult =
-                awsElasticBeanstalkClient.checkDNSAvailability(checkDNSAvailabilityRequest);
+        envName = findEnvName(awsElasticBeanstalkClient, applicationName, environmentName);
 
-        String cName;
-        if (checkDNSAvailabilityResult.getAvailable().booleanValue()) {
-            // If cName Available, proceed as there is no existing environment.
-            cName = cnamePrefix;
-
-        } else {
-            // If cName not Available, suffix cName, as there is an existing environment.
-            // Assuming environment belongs to the same App.
-            cName = cnamePrefix + "-0";
-        }
-
-        initiateCreateEnvironment(cName);
+        initiateCreateEnvironment();
 
         DescribeEnvironmentHealthRequest describeEnvironmentHealthRequest = new DescribeEnvironmentHealthRequest();
         describeEnvironmentHealthRequest.setEnvironmentName(environmentName);
@@ -147,14 +139,14 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
         }
     }
 
-    private void initiateCreateEnvironment(String cName)
+    private void initiateCreateEnvironment()
             throws MojoExecutionException, MojoFailureException {
 
         CreateEnvironmentMojo createEnvironmentMojo = new CreateEnvironmentMojo();
         createEnvironmentMojo.setApplicationName(applicationName);
         createEnvironmentMojo.setVersionLabel(versionLabel);
-        createEnvironmentMojo.setEnvironmentName(environmentName);
-        createEnvironmentMojo.setCnamePrefix(cName);
+        createEnvironmentMojo.setEnvName(envName);
+        createEnvironmentMojo.setcName(cName);
         createEnvironmentMojo.setGroupName(groupName);
         createEnvironmentMojo.setSolutionStackName(solutionStackName);
         createEnvironmentMojo.setOptionSettings(optionSettings);

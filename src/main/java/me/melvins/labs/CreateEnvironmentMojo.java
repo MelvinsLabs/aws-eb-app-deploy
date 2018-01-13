@@ -43,7 +43,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
 
     public static final List<String> HEALTH_STATUS_GREEN = Arrays.asList("OK", "Info");
 
-    private static final int MAX_WAIT_COUNT = 6;
+    private static final int MAX_WAIT_COUNT = 30;
 
     @Parameter(required = true)
     private String applicationName;
@@ -66,6 +66,10 @@ public class CreateEnvironmentMojo extends AbstractMojo {
     @Parameter(required = false)
     private String optionSettings;
 
+    private String cName;
+
+    private String envName;
+
     @Override
     public String toString() {
         return "CreateEnvironmentMojo{" +
@@ -76,6 +80,8 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 ", groupName='" + groupName + '\'' +
                 ", solutionStackName='" + solutionStackName + '\'' +
                 ", optionSettings='" + optionSettings + '\'' +
+                ", cName='" + cName + '\'' +
+                ", envName='" + envName + '\'' +
                 '}';
     }
 
@@ -87,6 +93,30 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
                         .withRegion(Regions.US_WEST_2);
 
+        if (cName == null) {
+            cName = findCName(awsElasticBeanstalkClient, cnamePrefix);
+
+            envName = findEnvName(awsElasticBeanstalkClient, applicationName, environmentName);
+        }
+        // else, Invoked From a Parent Mojo, no need to enrich again.
+
+        CreateEnvironmentRequest createEnvironmentRequest = new CreateEnvironmentRequest();
+        createEnvironmentRequest.setApplicationName(applicationName);
+        createEnvironmentRequest.setVersionLabel(versionLabel);
+        createEnvironmentRequest.setEnvironmentName(envName);
+        createEnvironmentRequest.setCNAMEPrefix(cName);
+        createEnvironmentRequest.setGroupName(groupName);
+        createEnvironmentRequest.setSolutionStackName(solutionStackName);
+        createEnvironmentRequest.setOptionSettings(createOptionSettings());
+
+        CreateEnvironmentResult createEnvironmentResult =
+                awsElasticBeanstalkClient.createEnvironment(createEnvironmentRequest);
+
+        verifyEnvironmentHealth(awsElasticBeanstalkClient, createEnvironmentResult);
+    }
+
+    public static String findCName(AWSElasticBeanstalkClient awsElasticBeanstalkClient,
+                                   String cnamePrefix) {
         // Check cName Availability.
         CheckDNSAvailabilityRequest checkDNSAvailabilityRequest = new CheckDNSAvailabilityRequest();
         checkDNSAvailabilityRequest.setCNAMEPrefix(cnamePrefix);
@@ -96,7 +126,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
 
         String cName;
         if (checkDNSAvailabilityResult.getAvailable().booleanValue()) {
-            // If cName Available, proceed as there is no existing environment.
+            // If cName Available, proceed, as there is no existing environment.
             cName = cnamePrefix;
 
         } else {
@@ -104,6 +134,12 @@ public class CreateEnvironmentMojo extends AbstractMojo {
             // Assuming environment belongs to the same App.
             cName = cnamePrefix + "-0";
         }
+        return cName;
+    }
+
+    public static String findEnvName(AWSElasticBeanstalkClient awsElasticBeanstalkClient,
+                                     String applicationName,
+                                     String environmentName) {
 
         DescribeEnvironmentsRequest describeEnvironmentsRequest = new DescribeEnvironmentsRequest();
         describeEnvironmentsRequest.setApplicationName(applicationName);
@@ -118,19 +154,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
         }
         // else Blue Environment Do Not Exist.
 
-        CreateEnvironmentRequest createEnvironmentRequest = new CreateEnvironmentRequest();
-        createEnvironmentRequest.setApplicationName(applicationName);
-        createEnvironmentRequest.setVersionLabel(versionLabel);
-        createEnvironmentRequest.setEnvironmentName(environmentName + blueGreenSuffix);
-        createEnvironmentRequest.setCNAMEPrefix(cName);
-        createEnvironmentRequest.setGroupName(groupName);
-        createEnvironmentRequest.setSolutionStackName(solutionStackName);
-        createEnvironmentRequest.setOptionSettings(createOptionSettings());
-
-        CreateEnvironmentResult createEnvironmentResult =
-                awsElasticBeanstalkClient.createEnvironment(createEnvironmentRequest);
-
-        verifyEnvironmentHealth(awsElasticBeanstalkClient, createEnvironmentResult);
+        return environmentName + blueGreenSuffix;
     }
 
     private void verifyEnvironmentHealth(AWSElasticBeanstalkClient awsElasticBeanstalkClient,
@@ -151,7 +175,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 LOGGER.info("Env [{0}] Health Status [{1}] Waiting {2}/{3}",
                         newEnvironmentId, healthStatus, waitCount, MAX_WAIT_COUNT);
 
-                TimeUtils.sleeper(1000 * 60 * 5);
+                TimeUtils.sleeper(1000 * 60 * 1);
 
                 DescribeEnvironmentHealthRequest describeEnvironmentHealthRequest = new
                         DescribeEnvironmentHealthRequest();
@@ -167,7 +191,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
 
     private List<ConfigurationOptionSetting> createOptionSettings() {
 
-        List<ConfigurationOptionSetting> configurationOptionSettingList = new ArrayList<ConfigurationOptionSetting>();
+        List<ConfigurationOptionSetting> configurationOptionSettingList = new ArrayList<>();
 
         LOGGER.info(optionSettings);
         if (optionSettings != null && optionSettings.trim().length() != 0) {
@@ -197,14 +221,6 @@ public class CreateEnvironmentMojo extends AbstractMojo {
         this.versionLabel = versionLabel;
     }
 
-    public void setEnvironmentName(String environmentName) {
-        this.environmentName = environmentName;
-    }
-
-    public void setCnamePrefix(String cnamePrefix) {
-        this.cnamePrefix = cnamePrefix;
-    }
-
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
@@ -216,4 +232,13 @@ public class CreateEnvironmentMojo extends AbstractMojo {
     public void setOptionSettings(String optionSettings) {
         this.optionSettings = optionSettings;
     }
+
+    public void setcName(String cName) {
+        this.cName = cName;
+    }
+
+    public void setEnvName(String envName) {
+        this.envName = envName;
+    }
+
 }
