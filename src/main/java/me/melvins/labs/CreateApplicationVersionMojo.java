@@ -4,10 +4,9 @@
 
 package me.melvins.labs;
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
-import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationRequest;
 import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationVersionRequest;
 import com.amazonaws.services.elasticbeanstalk.model.S3Location;
 import org.apache.logging.log4j.LogManager;
@@ -57,7 +56,7 @@ public class CreateApplicationVersionMojo extends AbstractMojo {
         LOGGER.info("Executing {0}", toString());
 
         AWSElasticBeanstalkClient awsElasticBeanstalkClient =
-                new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
+                new AWSElasticBeanstalkClient(InstanceProfileCredentialsProvider.getInstance())
                         .withRegion(Regions.US_WEST_2);
 
         CreateApplicationVersionRequest createApplicationVersionRequest = new CreateApplicationVersionRequest();

@@ -4,13 +4,9 @@
 
 package me.melvins.labs;
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
-import com.amazonaws.services.elasticbeanstalk.model.CheckDNSAvailabilityRequest;
-import com.amazonaws.services.elasticbeanstalk.model.CheckDNSAvailabilityResult;
-import com.amazonaws.services.elasticbeanstalk.model.ConfigurationOptionSetting;
-import com.amazonaws.services.elasticbeanstalk.model.CreateEnvironmentRequest;
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthRequest;
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthResult;
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest;
@@ -26,9 +22,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import static me.melvins.labs.CreateEnvironmentMojo.HEALTH_STATUS_GREEN;
 import static me.melvins.labs.CreateEnvironmentMojo.findCName;
@@ -65,6 +59,9 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
     @Parameter(required = false)
     private String optionSettings;
 
+    @Parameter
+    private String optionSettingsFileName;
+
     private String cName;
 
     private String envName;
@@ -79,6 +76,9 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
                 ", groupName='" + groupName + '\'' +
                 ", solutionStackName='" + solutionStackName + '\'' +
                 ", optionSettings='" + optionSettings + '\'' +
+                ", optionSettingsFileName='" + optionSettingsFileName + '\'' +
+                ", cName='" + cName + '\'' +
+                ", envName='" + envName + '\'' +
                 '}';
     }
 
@@ -87,10 +87,10 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
         LOGGER.info("Executing {0}", toString());
 
         AWSElasticBeanstalkClient awsElasticBeanstalkClient =
-                new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
+                new AWSElasticBeanstalkClient(InstanceProfileCredentialsProvider.getInstance())
                         .withRegion(Regions.US_WEST_2);
 
-        cName = findCName(awsElasticBeanstalkClient,cnamePrefix);
+        cName = findCName(awsElasticBeanstalkClient, cnamePrefix);
 
         envName = findEnvName(awsElasticBeanstalkClient, applicationName, environmentName);
 
@@ -150,6 +150,7 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
         createEnvironmentMojo.setGroupName(groupName);
         createEnvironmentMojo.setSolutionStackName(solutionStackName);
         createEnvironmentMojo.setOptionSettings(optionSettings);
+        createEnvironmentMojo.setOptionSettings(optionSettingsFileName);
 
         createEnvironmentMojo.execute();
     }

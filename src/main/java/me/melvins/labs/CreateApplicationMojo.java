@@ -4,7 +4,7 @@
 
 package me.melvins.labs;
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
 import com.amazonaws.services.elasticbeanstalk.model.CreateApplicationRequest;
@@ -43,7 +43,7 @@ public class CreateApplicationMojo extends AbstractMojo {
         LOGGER.info("Executing {0}", toString());
 
         AWSElasticBeanstalkClient awsElasticBeanstalkClient =
-                new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
+                new AWSElasticBeanstalkClient(InstanceProfileCredentialsProvider.getInstance())
                         .withRegion(Regions.US_WEST_2);
 
         CreateApplicationRequest createApplicationRequest = new CreateApplicationRequest();

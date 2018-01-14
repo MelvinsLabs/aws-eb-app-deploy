@@ -4,7 +4,7 @@
 
 package me.melvins.labs;
 
-import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClient;
 import com.amazonaws.services.elasticbeanstalk.model.CheckDNSAvailabilityRequest;
@@ -17,6 +17,7 @@ import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthRe
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest;
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsResult;
 import me.melvins.labs.utils.TimeUtils;
+import me.melvins.labs.utils.YamlUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.MessageFormatMessageFactory;
@@ -30,6 +31,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -57,14 +59,17 @@ public class CreateEnvironmentMojo extends AbstractMojo {
     @Parameter(required = true)
     private String cnamePrefix;
 
-    @Parameter(required = false)
+    @Parameter
     private String groupName;
 
     @Parameter(required = true)
     private String solutionStackName;
 
-    @Parameter(required = false)
+    @Parameter
     private String optionSettings;
+
+    @Parameter
+    private String optionSettingsFileName;
 
     private String cName;
 
@@ -80,6 +85,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 ", groupName='" + groupName + '\'' +
                 ", solutionStackName='" + solutionStackName + '\'' +
                 ", optionSettings='" + optionSettings + '\'' +
+                ", optionSettingsFileName='" + optionSettingsFileName + '\'' +
                 ", cName='" + cName + '\'' +
                 ", envName='" + envName + '\'' +
                 '}';
@@ -90,7 +96,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
         LOGGER.info("Executing {0}", toString());
 
         AWSElasticBeanstalkClient awsElasticBeanstalkClient =
-                new AWSElasticBeanstalkClient(new ProfileCredentialsProvider())
+                new AWSElasticBeanstalkClient(InstanceProfileCredentialsProvider.getInstance())
                         .withRegion(Regions.US_WEST_2);
 
         if (cName == null) {
@@ -150,7 +156,11 @@ public class CreateEnvironmentMojo extends AbstractMojo {
 
         String blueGreenSuffix = "-B";
         if (describeEnvironmentsResult.getEnvironments().size() > 0) {
-            blueGreenSuffix = "-G";
+            String status = describeEnvironmentsResult.getEnvironments().get(0).getStatus();
+            LOGGER.info("Health Status Of Blue Env Is {0}", status);
+            if (!status.contains("Terminated")) {
+                blueGreenSuffix = "-G";
+            }
         }
         // else Blue Environment Do Not Exist.
 
@@ -180,6 +190,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 DescribeEnvironmentHealthRequest describeEnvironmentHealthRequest = new
                         DescribeEnvironmentHealthRequest();
                 describeEnvironmentHealthRequest.setEnvironmentId(newEnvironmentId);
+                describeEnvironmentHealthRequest.setAttributeNames(Arrays.asList("All"));
 
                 DescribeEnvironmentHealthResult describeEnvironmentHealthResult =
                         awsElasticBeanstalkClient.describeEnvironmentHealth(describeEnvironmentHealthRequest);
@@ -209,6 +220,32 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                 configurationOptionSettingList.add(configurationOptionSetting);
             }
         }
+
+        return configurationOptionSettingList;
+    }
+
+    private List<ConfigurationOptionSetting> createOptionSettingsFromYaml() {
+
+        Map<String, Map<String, String>> yaml = YamlUtils.readYamlFile(optionSettingsFileName);
+        LOGGER.info(yaml);
+
+        List<ConfigurationOptionSetting> configurationOptionSettingList = new ArrayList<>();
+
+        yaml.forEach((namespace, values) -> {
+
+            values.forEach((option, value) -> {
+
+                LOGGER.info("Adding {0} {1} {2}", namespace, option, value);
+
+                ConfigurationOptionSetting configurationOptionSetting = new ConfigurationOptionSetting();
+                configurationOptionSetting.setNamespace(namespace);
+                configurationOptionSetting.setOptionName(option);
+                configurationOptionSetting.setValue(value);
+
+                configurationOptionSettingList.add(configurationOptionSetting);
+            });
+
+        });
 
         return configurationOptionSettingList;
     }

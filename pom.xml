@@ -82,6 +82,13 @@
             <artifactId>aws-java-sdk-s3</artifactId>
             <version>${com.amazonaws.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <version>2.9.3</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -117,6 +124,33 @@
                                     <s3Bucket>${s3.bucket}</s3Bucket>
                                     <s3Key>${s3.key}</s3Key>
                                     <file>${file.to.upload}</file>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>DownloadBundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>me.melvins.labs</groupId>
+                        <artifactId>aws-maven-plugin</artifactId>
+                        <version>0.0.0</version>
+                        <executions>
+                            <execution>
+                                <id>DownloadBundle</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>DownloadBundle</goal>
+                                </goals>
+                                <configuration>
+                                    <s3Bucket>${s3.bucket}</s3Bucket>
+                                    <s3Key>${s3.key}</s3Key>
+                                    <file>${file}</file>
                                 </configuration>
                             </execution>
                         </executions>
