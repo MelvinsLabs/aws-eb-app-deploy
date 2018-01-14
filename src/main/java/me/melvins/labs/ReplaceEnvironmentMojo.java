@@ -24,7 +24,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import java.util.Arrays;
 
-import static me.melvins.labs.CreateEnvironmentMojo.HEALTH_STATUS_GREEN;
+import static me.melvins.labs.CreateEnvironmentMojo.HEALTH_GREEN;
 import static me.melvins.labs.CreateEnvironmentMojo.findCName;
 import static me.melvins.labs.CreateEnvironmentMojo.findEnvName;
 
@@ -96,22 +96,24 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
 
         initiateCreateEnvironment();
 
-        DescribeEnvironmentHealthRequest describeEnvironmentHealthRequest = new DescribeEnvironmentHealthRequest();
-        describeEnvironmentHealthRequest.setEnvironmentName(environmentName);
+        DescribeEnvironmentsRequest describeEnvironmentsRequest = new DescribeEnvironmentsRequest();
+        describeEnvironmentsRequest.setEnvironmentNames(Arrays.asList(envName));
 
-        DescribeEnvironmentHealthResult describeEnvironmentHealthResult =
-                awsElasticBeanstalkClient.describeEnvironmentHealth(describeEnvironmentHealthRequest);
+        DescribeEnvironmentsResult describeEnvironmentsResult =
+                awsElasticBeanstalkClient.describeEnvironments(describeEnvironmentsRequest);
 
-        if (HEALTH_STATUS_GREEN.contains(describeEnvironmentHealthResult.getHealthStatus())) {
+        String health = describeEnvironmentsResult.getEnvironments().get(0).getHealth();
+
+        if (HEALTH_GREEN.equalsIgnoreCase(health)) {
 
             if (cName.contains("-0")) {
                 // Initiate Swap
-                DescribeEnvironmentsRequest describeEnvironmentsRequest = new DescribeEnvironmentsRequest();
+                describeEnvironmentsRequest = new DescribeEnvironmentsRequest();
                 describeEnvironmentsRequest.setApplicationName(applicationName);
                 describeEnvironmentsRequest.setEnvironmentNames(
                         Arrays.asList(environmentName + "-B", environmentName + "-G"));
 
-                DescribeEnvironmentsResult describeEnvironmentsResult =
+                describeEnvironmentsResult =
                         awsElasticBeanstalkClient.describeEnvironments(describeEnvironmentsRequest);
 
                 String newEnvId = null;
@@ -134,8 +136,7 @@ public class ReplaceEnvironmentMojo extends AbstractMojo {
             }
 
         } else {
-            LOGGER.error("Unable To Get A Health Env After Wait [{0}]",
-                    describeEnvironmentHealthResult.getHealthStatus());
+            LOGGER.error("Unable To Get A Health Env After Wait [{0}]", health);
         }
     }
 

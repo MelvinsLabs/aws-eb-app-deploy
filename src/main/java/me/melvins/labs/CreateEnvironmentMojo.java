@@ -12,8 +12,6 @@ import com.amazonaws.services.elasticbeanstalk.model.CheckDNSAvailabilityResult;
 import com.amazonaws.services.elasticbeanstalk.model.ConfigurationOptionSetting;
 import com.amazonaws.services.elasticbeanstalk.model.CreateEnvironmentRequest;
 import com.amazonaws.services.elasticbeanstalk.model.CreateEnvironmentResult;
-import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthRequest;
-import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentHealthResult;
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest;
 import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsResult;
 import me.melvins.labs.utils.TimeUtils;
@@ -43,7 +41,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
     private static final Logger LOGGER =
             LogManager.getLogger(CreateEnvironmentMojo.class, new MessageFormatMessageFactory());
 
-    public static final List<String> HEALTH_STATUS_GREEN = Arrays.asList("OK", "Info");
+    public static final String HEALTH_GREEN = "Green";
 
     private static final int MAX_WAIT_COUNT = 30;
 
@@ -171,31 +169,29 @@ public class CreateEnvironmentMojo extends AbstractMojo {
                                          CreateEnvironmentResult createEnvironmentResult) {
 
         String newEnvironmentId = createEnvironmentResult.getEnvironmentId();
-        String healthStatus = createEnvironmentResult.getHealthStatus();
+        String health = createEnvironmentResult.getHealth();
 
         int waitCount = 0;
         while (waitCount < MAX_WAIT_COUNT) {
 
-            if (HEALTH_STATUS_GREEN.contains(healthStatus)) {
-                LOGGER.info("Health Status Of Env [{0}] Is {1}", newEnvironmentId, healthStatus);
+            if (HEALTH_GREEN.equalsIgnoreCase(health)) {
+                LOGGER.info("Health Status Of Env [{0}] Is {1}", newEnvironmentId, health);
 
             } else {
                 waitCount++;
 
                 LOGGER.info("Env [{0}] Health Status [{1}] Waiting {2}/{3}",
-                        newEnvironmentId, healthStatus, waitCount, MAX_WAIT_COUNT);
+                        newEnvironmentId, health, waitCount, MAX_WAIT_COUNT);
 
                 TimeUtils.sleeper(1000 * 60 * 1);
 
-                DescribeEnvironmentHealthRequest describeEnvironmentHealthRequest = new
-                        DescribeEnvironmentHealthRequest();
-                describeEnvironmentHealthRequest.setEnvironmentId(newEnvironmentId);
-                describeEnvironmentHealthRequest.setAttributeNames(Arrays.asList("All"));
+                DescribeEnvironmentsRequest describeEnvironmentsRequest = new DescribeEnvironmentsRequest();
+                describeEnvironmentsRequest.setEnvironmentIds(Arrays.asList(newEnvironmentId));
 
-                DescribeEnvironmentHealthResult describeEnvironmentHealthResult =
-                        awsElasticBeanstalkClient.describeEnvironmentHealth(describeEnvironmentHealthRequest);
+                DescribeEnvironmentsResult describeEnvironmentsResult =
+                        awsElasticBeanstalkClient.describeEnvironments(describeEnvironmentsRequest);
 
-                healthStatus = describeEnvironmentHealthResult.getHealthStatus();
+                health = describeEnvironmentsResult.getEnvironments().get(0).getHealth();
             }
         }
     }
