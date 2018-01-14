@@ -101,6 +101,12 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.4</version>
+            </plugin>
         </plugins>
     </build>
 
@@ -195,7 +201,7 @@
                         <executions>
                             <execution>
                                 <id>CreateApplicationVersion</id>
-                                <phase>deploy</phase>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>CreateApplicationVersion</goal>
                                 </goals>
@@ -209,7 +215,7 @@
 
                             <execution>
                                 <id>CreateEnvironment</id>
-                                <phase>deploy</phase>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>CreateEnvironment</goal>
                                 </goals>
@@ -240,7 +246,7 @@
                         <executions>
                             <execution>
                                 <id>ReplaceEnvironment</id>
-                                <phase>deploy</phase>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>ReplaceEnvironment</goal>
                                 </goals>
@@ -272,7 +278,7 @@
                         <executions>
                             <execution>
                                 <id>SwapEnvironment</id>
-                                <phase>deploy</phase>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>SwapEnvironment</goal>
                                 </goals>
@@ -298,7 +304,7 @@
                         <executions>
                             <execution>
                                 <id>TerminateEnvironment</id>
-                                <phase>deploy</phase>
+                                <phase>compile</phase>
                                 <goals>
                                     <goal>TerminateEnvironment</goal>
                                 </goals>

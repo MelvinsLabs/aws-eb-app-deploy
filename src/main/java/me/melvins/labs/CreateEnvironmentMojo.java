@@ -207,7 +207,7 @@ public class CreateEnvironmentMojo extends AbstractMojo {
             for (String eachOptionSetting : allOptionSettings) {
                 String[] optionSettingComponents = eachOptionSetting.split("=");
 
-                LOGGER.info(optionSettingComponents);
+                LOGGER.info(Arrays.toString(optionSettingComponents));
                 ConfigurationOptionSetting configurationOptionSetting = new ConfigurationOptionSetting();
                 configurationOptionSetting.setNamespace(optionSettingComponents[0]);
                 configurationOptionSetting.setOptionName(optionSettingComponents[1]);

@@ -1,2 +1,10 @@
-aws:autoscaling:asg:
-  Availability Zones: "us-west-2a,us-west-2b"
+aws:autoscaling:launchconfiguration:
+  EC2KeyName: price_nonprod_default
+  IamInstanceProfile: aws-elasticbeanstalk-ec2-role
+aws:ec2:vpc:
+  VPCId: vpc-8eaecde9
+  Subnets: subnet-835b87ca
+  ELBSubnets: subnet-835b87ca
+  ELBScheme: internal
+aws:elasticbeanstalk:environment:
+  ServiceRole: aws-elasticbeanstalk-ec2-role
